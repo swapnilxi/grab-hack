@@ -1,0 +1,36 @@
+# === Root ===
+.env
+*.pyc
+__pycache__/
+*.log
+*.sqlite3
+*.db
+.DS_Store
+*.pem
+
+# === Python ===
+backend/venv/
+backend/.env
+backend/__pycache__/
+backend/*.pyc
+backend/*.db
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/.coverage
+
+# === Node/Frontend ===
+frontend/node_modules/
+frontend/.env
+frontend/.next/
+frontend/.turbo/
+frontend/.vercel/
+frontend/dist/
+frontend/build/
+frontend/.eslintcache
+
+# === Logs and general ===
+*.log
+*.lock
+*.tmp
+*.swp
+*~

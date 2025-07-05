@@ -1,0 +1,23 @@
+fastapi
+uvicorn
+pydantic
+httpx
+openai
+faiss-cpu
+sentence-transformers
+langchain
+python-multipart
+autogenstudio # optional if using AutoGen framework
+python-dotenv
+
+sqlalchemy[asyncio]
+asyncpg
+psycopg
+autogen
+pgvector
+
+
+
+
+
+

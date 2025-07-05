@@ -12,7 +12,7 @@ AWS_SESSION_TOKEN = os.getenv("AWS_SESSION_TOKEN")
 
 VALID_FRAUD_RESULTS = {"fraud", "not_fraud", "uncertain"}
 
-class FraudDetector:
+class FraudAgent:
     def __init__(self):
         self.client = boto3.client(
             "bedrock-runtime",
@@ -21,8 +21,10 @@ class FraudDetector:
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
             aws_session_token=AWS_SESSION_TOKEN,
         )
+        self.model_id = CLAUDE_MODEL_ID
 
-    def analyze_data(self, summary: str, payload: dict):
+    def analyze_data(self, summary: str, payload: dict) -> dict:
+        print("[FraudAgent] Fraud Agent running...")  # Log to console
         """
         Calls Claude via Bedrock to assess the transaction for fraud.
         Returns: {
@@ -44,8 +46,8 @@ class FraudDetector:
             "- uncertain: if you cannot tell from the data\n"
             "Be concise and objective. Example:\n"
             '{ "fraud_result": "fraud", "reason": "Unusual amount and flagged metadata" }\n\n'
-            "Transaction:\n"
-            f"{json.dumps(payload, indent=2)}\n"
+            f"Summary: {summary}\n"
+            f"Data: {json.dumps(payload, indent=2)}"
         )
 
         messages = [{"role": "user", "content": prompt}]
@@ -59,7 +61,7 @@ class FraudDetector:
 
         try:
             response = self.client.invoke_model(
-                modelId=CLAUDE_MODEL_ID,
+                modelId=self.model_id,
                 body=json.dumps(request_body),
                 contentType="application/json"
             )
@@ -75,26 +77,30 @@ class FraudDetector:
                         "fraud_detected": False,
                         "fraud_result": "uncertain",
                         "reason": f"Invalid output from Claude: {result_val}",
-                        "raw": result_text
+                        "raw": result_text,
+                        "agent": "Fraud Agent running"
                     }
                 return {
                     "fraud_detected": fraud_detected,
                     "fraud_result": result_val,
                     "reason": model_result.get("reason", ""),
+                    "agent": "Fraud Agent running"
                 }
             except Exception:
                 return {
                     "fraud_detected": False,
                     "fraud_result": "uncertain",
                     "reason": "LLM output parsing failed",
-                    "raw": result_text
+                    "raw": result_text,
+                    "agent": "Fraud Agent running"
                 }
         except Exception as e:
             return {
                 "fraud_detected": False,
                 "fraud_result": "uncertain",
                 "reason": f"Exception in Bedrock call: {e}",
-                "raw": ""
+                "raw": "",
+                "agent": "Fraud Agent running"
             }
 
-fraud_detector = FraudDetector()
+fraud_detector = FraudAgent()

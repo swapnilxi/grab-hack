@@ -5,10 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from utils.query import ask_question_from_db
 
 from src.TriageAgent import TriageAgent
-from src.FraudAgent import FraudDetector
+from src.FraudAgent import FraudAgent
 from src.HealingAgent import HealingAgent
 
-fraud_detector = FraudDetector()
+fraud_detector = FraudAgent()
 healing_agent = HealingAgent()
 triage_agent = TriageAgent()
 

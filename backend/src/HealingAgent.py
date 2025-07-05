@@ -22,6 +22,7 @@ class HealingAgent:
         self.model_id = CLAUDE_MODEL_ID
 
     def analyze_failure(self, summary: str, payload: dict) -> dict:
+        print("[HealingAgent] Healing Agent running...")  # Log to console
         """
         Calls Claude via Bedrock to assess if healing/self-healing/system intervention is needed.
         Returns:
@@ -73,20 +74,23 @@ class HealingAgent:
                     "healing_needed": healing_needed,
                     "reason": model_result.get("reason", ""),
                     "recommended_action": model_result.get("recommended_action", ""),
+                    "agent": "Healing Agent running"
                 }
             except Exception:
                 return {
                     "healing_needed": False,
                     "reason": "LLM output parsing failed",
                     "recommended_action": "",
-                    "raw": result_text
+                    "raw": result_text,
+                    "agent": "Healing Agent running"
                 }
         except Exception as e:
             return {
                 "healing_needed": False,
                 "reason": f"Exception in Bedrock call: {e}",
                 "recommended_action": "",
-                "raw": ""
+                "raw": "",
+                "agent": "Healing Agent running"
             }
 
 healing_agent = HealingAgent()

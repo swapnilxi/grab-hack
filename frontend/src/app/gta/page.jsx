@@ -18,10 +18,11 @@ export default function GTADashboardPage() {
       }}>
         Welcome to the Grab Triage Agent Dashboard
       </h2>
-
-       {IncidentData.map((incident, idx) => (
-        <IncidentCard key={incident.transaction_id || idx} incident={incident} />
-      ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {IncidentData.map((incident, idx) => (
+          <IncidentCard key={incident.transaction_id || idx} incident={incident} />
+        ))}
+      </div>
     </div>
   );
 }

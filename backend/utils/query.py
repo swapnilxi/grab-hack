@@ -62,7 +62,7 @@ def call_claude(context: str, question: str) -> str:
         client = get_bedrock_client()
         body = {
             "messages": [
-                {"role": "user", "content": f"Use the following context to answer:\n\n{context}\n\nQuestion: {question} in proper markdown format"}
+                {"role": "user", "content": f"Use the following context to answer:\n\n{context}\n\nQuestion: {question}"}
             ],
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": 1024

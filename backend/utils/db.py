@@ -21,7 +21,7 @@ AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_SESSION_TOKEN = os.getenv("AWS_SESSION_TOKEN")
 MODEL_ID = "amazon.titan-embed-text-v2:0"
-EMBED_DIM = 1024  # Titan V2 supported sizes: 256, 512, 1024 (default)
+EMBED_DIM = 1024  
 
 # === PG DB Config ===
 DB_URL = os.getenv("DATABASE_URL")
@@ -63,7 +63,6 @@ async def init_db(pool):
         logging.info("Initializing database and extensions...")
 
         await conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-
         await conn.execute(f"""
             CREATE TABLE IF NOT EXISTS GrabData (
                 id SERIAL PRIMARY KEY,
@@ -72,17 +71,13 @@ async def init_db(pool):
                 embedding VECTOR({EMBED_DIM})
             );
         """)
-
-        await conn.execute("DROP INDEX IF EXISTS idx_document_chunks_embedding;")
-
+        await conn.execute("DROP INDEX IF EXISTS idx_grabdata_embedding;")
         await conn.execute(f"""
             CREATE INDEX IF NOT EXISTS idx_grabdata_embedding
-            ON GrabData
-            USING ivfflat (embedding vector_cosine_ops)
+            ON GrabData USING ivfflat (embedding vector_cosine_ops)
             WITH (lists = 100);
         """)
-
-        logging.info("Database initialized for GrabData.")
+        logging.info("✅ DB initialized.")
 
 # === Insert Chunk ===
 async def insert_chunk(pool, filepath, content, embedding):
@@ -116,7 +111,7 @@ async def fetch_similar(pool, embedding, limit=5):
         )
         return rows
 
-# === File Scanner ===
+# === Load Dataset Files ===
 def load_all_files(root=None):
     if root is None:
         script_dir = os.path.dirname(os.path.abspath(__file__))

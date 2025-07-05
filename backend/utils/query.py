@@ -62,7 +62,7 @@ def call_claude(context: str, question: str) -> str:
         client = get_bedrock_client()
         body = {
             "messages": [
-                {"role": "user", "content": f"Use the following context to answer:\n\n{context}\n\nQuestion: {question}"}
+                {"role": "user", "content": f"Use the following context to answer:\n\n{context}\n\nQuestion: {question} in proper readme format"}
             ],
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": 1024
@@ -91,3 +91,38 @@ async def ask_question_from_db(question: str) -> str:
 
     combined_context = "\n---\n".join(chunks)
     return call_claude(combined_context, question)
+
+
+def call_claude_with_context(question: str, context: str) -> str:
+    try:
+        client = get_bedrock_client()
+        prompt = f"""Human: You are a payment analysis assistant. Answer the question based on the following context:\n\n{context}\n\nQuestion: {question}\n\nAssistant:"""
+        body = {
+            "prompt": prompt,
+            "max_tokens": 1000,
+            "temperature": 0.7,
+            "anthropic_version": "bedrock-2023-05-31"
+        }
+        response = client.invoke_model(
+            body=json.dumps(body),
+            modelId=MODEL_ID,
+            contentType="application/json",
+            accept="application/json",
+            inferenceProfileArn=CLAUDE_PROFILE_ARN
+        )
+        result = json.loads(response["body"].read())
+        return result.get("completion", "").strip()
+    except Exception as e:
+        logging.error(f"[ERROR] Claude call failed: {e}")
+        return "❌ Claude model call failed."
+
+async def ask_question_with_context(question: str):
+    pool = await get_pool()
+    embedding = get_titan_embedding(question)
+    similar_chunks = await fetch_similar(pool, embedding)
+    
+    context = "\n\n".join([row['content'] for row in similar_chunks])
+    sources = [row['filepath'] for row in similar_chunks]
+
+    answer = call_claude_with_context(question, context)
+    return {"answer": answer, "sources": sources}

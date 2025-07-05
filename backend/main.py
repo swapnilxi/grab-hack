@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Body
 from pydantic import BaseModel
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
-from utils.query import ask_question_from_db
+from utils.query import ask_question_from_db, ask_question_with_context
 
 
 
@@ -111,6 +111,11 @@ class AskRequest(BaseModel):
 async def ask_endpoint(request: AskRequest):
     response = await ask_question_from_db(request.question)
     return {"response": response}
+
+
+@app.post("/ask-context")
+async def ask_with_context(body: AskRequest):
+    return await ask_question_with_context(body.question)
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,0 +1,92 @@
+[
+  {
+    "sender_id": "user1",
+    "receiver_id": "merchant1",
+    "amount": 385.75,
+    "transaction_id": "0xd35e938e8ce56d41162d0e64cd7c76874b01f1504a653dbef0ae1e44999de223",
+    "request_id": "0x53ad832d9384937fd52028787f2721cb14616f1ffa8a44319a5958d22b18b487",
+    "charge_id": "0x781bce1f868c8bae75b4bef7b5c2346a61158f4b5cdeb8c2a46ba40e93e67f22",
+    "status": "PENDING",
+    "currency": "USD",
+    "metadata": {
+      "fraud_detection_signal": "bank server down"
+    },
+    "created_at": "2025-07-01T16:27:09+05:30",
+    "updated_at": "2025-07-01T16:27:09+05:30"
+  },
+  {
+    "sender_id": "user2",
+    "receiver_id": "merchant2",
+    "amount": 1000.00,
+    "transaction_id": "0xa12b938e1ae56d41162d0e64cd7c12345b01f1504a653dbef0ae1e44999aaaac",
+    "request_id": "0x23ad832d1111937fd52028787f2721cb14616f1ffa8a44319a5958d22b18b111",
+    "charge_id": "0x234bce1f12348bae75b4bef7b5c2346a61158f4b5cdeb8c2a46ba40e93e67123",
+    "status": "FAILED",
+    "currency": "USD",
+    "metadata": {
+      "fraud_detection_signal": "multiple declined attempts, card reported stolen"
+    },
+    "created_at": "2025-07-01T18:00:00+05:30",
+    "updated_at": "2025-07-01T18:02:10+05:30"
+  },
+  {
+    "sender_id": "user3",
+    "receiver_id": "merchant3",
+    "amount": 59.99,
+    "transaction_id": "0xb98c938e1ae56d41162d0e64cd7c76543b01f1504a653dbef0ae1e44999de223",
+    "request_id": "0x78ad832d9384937fd52028787f2721cb14616f1ffa8a44319a5958d22b18b488",
+    "charge_id": "0x900bce1f868c8bae75b4bef7b5c2346a61158f4b5cdeb8c2a46ba40e93e67987",
+    "status": "SUCCEEDED",
+    "currency": "USD",
+    "metadata": {
+      "fraud_detection_signal": "none"
+    },
+    "created_at": "2025-07-02T09:45:00+05:30",
+    "updated_at": "2025-07-02T09:45:02+05:30"
+  },
+  {
+    "sender_id": "user4",
+    "receiver_id": "merchant4",
+    "amount": 7700.00,
+    "transaction_id": "0xdeadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678",
+    "request_id": "0xfacefacefacefacefacefacefacefacefacefacefacefacefacefacefaceface",
+    "charge_id": "0xdecafbaddecafbaddecafbaddecafbaddecafbaddecafbaddecafbaddecafbad",
+    "status": "FAILED",
+    "currency": "EUR",
+    "metadata": {
+      "fraud_detection_signal": "ip address from blacklisted country, amount unusually high"
+    },
+    "created_at": "2025-07-02T14:00:00+05:30",
+    "updated_at": "2025-07-02T14:02:00+05:30"
+  },
+  {
+    "sender_id": "user5",
+    "receiver_id": "merchant5",
+    "amount": 123.45,
+    "transaction_id": "0xcafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234",
+    "request_id": "0xbeefbeefbeefbeefbeefbeefbeefbeefbeefbeefbeefbeefbeefbeefbeefbeef",
+    "charge_id": "0xfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeed",
+    "status": "PENDING",
+    "currency": "INR",
+    "metadata": {
+      "fraud_detection_signal": "suspicious capture on flagged charge"
+    },
+    "created_at": "2025-07-03T10:00:00+05:30",
+    "updated_at": "2025-07-03T10:00:00+05:30"
+  },
+  {
+    "sender_id": "user6",
+    "receiver_id": "merchant6",
+    "amount": 25.00,
+    "transaction_id": "0x1111111111111111111111111111111111111111111111111111111111111111",
+    "request_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+    "charge_id": "0x3333333333333333333333333333333333333333333333333333333333333333",
+    "status": "SUCCEEDED",
+    "currency": "GBP",
+    "metadata": {
+      "fraud_detection_signal": "none"
+    },
+    "created_at": "2025-07-03T17:15:30+05:30",
+    "updated_at": "2025-07-03T17:15:30+05:30"
+  }
+]

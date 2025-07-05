@@ -2,6 +2,9 @@ from fastapi import FastAPI, Request, Body
 from pydantic import BaseModel
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
+from utils.query import ask_question_from_db
+
+
 
 app = FastAPI()
 
@@ -54,6 +57,10 @@ def run_self_healing_agent(data: PaymentRequest):
 def run_consistency_reviewer(data: PaymentRequest, agent_outputs: dict):
     return {"status": "consistent", "action_taken": False}
 
+@app.get("/")
+def root():
+    return {"message": "Grab Agent App is running"}
+
 @app.post("/run-agent/{agent_name}")
 def run_single_agent(agent_name: str, payload: dict = Body(...)):
     mock_request = PaymentRequest(
@@ -96,3 +103,15 @@ def chat_message(payload: dict = Body(...)):
     else:
         fraud_check_override["allow"] = False
         return {"response": f"❌ Payment failed for: {user_message}"}
+
+class AskRequest(BaseModel):
+    question: str
+
+@app.post("/ask")
+async def ask_endpoint(request: AskRequest):
+    response = await ask_question_from_db(request.question)
+    return {"response": response}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)

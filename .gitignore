@@ -34,3 +34,8 @@ frontend/.eslintcache
 *.tmp
 *.swp
 *~
+
+# === Dataset ===
+dataset/
+
+

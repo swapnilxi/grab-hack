@@ -4,6 +4,14 @@ from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from utils.query import ask_question_from_db
 
+from src.TriageAgent import TriageAgent
+from src.FraudAgent import FraudDetector
+from src.HealingAgent import HealingAgent
+
+fraud_detector = FraudDetector()
+healing_agent = HealingAgent()
+triage_agent = TriageAgent()
+
 
 
 app = FastAPI()
@@ -92,6 +100,25 @@ def run_pipeline(payload: PaymentRequest):
     response["healing"] = run_self_healing_agent(payload)
     response["review"] = run_consistency_reviewer(payload, response)
     return response
+
+@app.post("/run-triage")
+def run_triage(payload: dict = Body(...)):
+    summary = f"Transaction of {payload}"
+    result = triage_agent.route_request(summary, payload)
+    return result
+
+@app.post("/run-fraud-agent")
+def run_fraud(payload: dict = Body(...)):
+    summary = f"Transaction of {payload}"
+    result = fraud_detector.analyze_data(summary, payload)
+    return {"status": "fraud_detected" if result["fraud_detected"] else "clear", "result": result}
+
+@app.post("/run-healing-agent")
+def run_healing(payload: dict = Body(...)):
+    summary = f"Transaction of {payload}"
+    result = healing_agent.analyze_failure(summary, payload)
+    return {"status": "healing_needed" if result["healing_needed"] else "ok", "result": result}
+
 
 @app.post("/chat-message")
 def chat_message(payload: dict = Body(...)):

@@ -1,4 +1,3 @@
-# db.py
 import os
 import json
 import asyncio
@@ -13,21 +12,21 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
 
-# === Load environment variables ===
+# === Load .env variables ===
 load_dotenv()
 
-# === AWS Credentials ===
+# === AWS Config ===
 AWS_REGION = os.getenv("AWS_REGION")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_SESSION_TOKEN = os.getenv("AWS_SESSION_TOKEN")
 MODEL_ID = "amazon.titan-embed-text-v2:0"
-EMBED_DIM = 1536  # Titan V2
+EMBED_DIM = 1024  # Titan V2 supported sizes: 256, 512, 1024 (default)
 
-# === DB ===
+# === PG DB Config ===
 DB_URL = os.getenv("DATABASE_URL")
 
-# === AWS Bedrock ===
+# === AWS Bedrock Client ===
 def get_bedrock_client():
     return boto3.client(
         "bedrock-runtime",
@@ -37,10 +36,11 @@ def get_bedrock_client():
         aws_session_token=AWS_SESSION_TOKEN
     )
 
+# === Embedding Function ===
 def get_titan_embedding(text: str) -> list:
     try:
         client = get_bedrock_client()
-        body = {"inputText": text[:2000]}  # Truncate if needed
+        body = {"inputText": text[:2000]}
         response = client.invoke_model(
             modelId=MODEL_ID,
             body=json.dumps(body),
@@ -53,14 +53,17 @@ def get_titan_embedding(text: str) -> list:
         logging.error(f"Embedding failed: {e}")
         return []
 
-# === PGVECTOR Setup ===
+# === DB Pool Setup ===
 async def get_pool():
     return await asyncpg.create_pool(dsn=DB_URL)
 
+# === Initialize DB ===
 async def init_db(pool):
     async with pool.acquire() as conn:
         logging.info("Initializing database and extensions...")
+
         await conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+
         await conn.execute(f"""
             CREATE TABLE IF NOT EXISTS GrabData (
                 id SERIAL PRIMARY KEY,
@@ -69,24 +72,33 @@ async def init_db(pool):
                 embedding VECTOR({EMBED_DIM})
             );
         """)
-        await conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding
-            ON document_chunks
+
+        await conn.execute("DROP INDEX IF EXISTS idx_document_chunks_embedding;")
+
+        await conn.execute(f"""
+            CREATE INDEX IF NOT EXISTS idx_grabdata_embedding
+            ON GrabData
             USING ivfflat (embedding vector_cosine_ops)
             WITH (lists = 100);
         """)
-        logging.info("Database initialized.")
 
-# === Insert Logic ===
+        logging.info("Database initialized for GrabData.")
+
+# === Insert Chunk ===
 async def insert_chunk(pool, filepath, content, embedding):
     if not embedding:
         logging.warning(f"Skipping {filepath} due to empty embedding.")
         return
+    if len(embedding) != EMBED_DIM:
+        logging.error(f"Insert failed for {filepath}: expected {EMBED_DIM} dimensions, got {len(embedding)}")
+        return
+
     embedding_str = "[" + ",".join(str(x) for x in embedding) + "]"
+
     async with pool.acquire() as conn:
         try:
             await conn.execute("""
-                INSERT INTO document_chunks (filepath, content, embedding)
+                INSERT INTO GrabData (filepath, content, embedding)
                 VALUES ($1, $2, $3::vector)
                 ON CONFLICT (filepath) DO NOTHING;
             """, filepath, content, embedding_str)
@@ -94,12 +106,12 @@ async def insert_chunk(pool, filepath, content, embedding):
         except Exception as e:
             logging.error(f"Insert failed for {filepath}: {e}")
 
-# === Search Logic ===
+# === Fetch Similar ===
 async def fetch_similar(pool, embedding, limit=5):
     embedding_str = "[" + ",".join(str(x) for x in embedding) + "]"
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            "SELECT filepath, content FROM document_chunks ORDER BY embedding <-> $1::vector LIMIT $2",
+            "SELECT filepath, content FROM GrabData ORDER BY embedding <-> $1::vector LIMIT $2",
             embedding_str, limit
         )
         return rows
@@ -120,8 +132,7 @@ def load_all_files(root=None):
                 except Exception as e:
                     logging.error(f"Reading failed for {path}: {e}")
 
-
-# === Embed All ===
+# === Embed All Files ===
 async def embed_all_files():
     pool = await get_pool()
     await init_db(pool)
@@ -135,6 +146,6 @@ async def embed_all_files():
     logging.info(f"Embedding complete. Total files processed: {total}")
     await pool.close()
 
-# === CLI Entrypoint ===
+# === Entry Point ===
 if __name__ == "__main__":
     asyncio.run(embed_all_files())

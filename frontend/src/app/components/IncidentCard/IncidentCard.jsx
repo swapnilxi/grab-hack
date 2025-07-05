@@ -1,29 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-
-export default function IncidentCard({ incident }) {
-  const [response, setResponse] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  const runTriage = async () => {
-    setLoading(true);
-    setResponse(null);
-    try {
-      const res = await fetch('http://localhost:8080/run-triage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(incident),
-      });
-      const data = await res.json();
-      setResponse(data);
-    } catch (e) {
-      setResponse({ error: 'Failed to connect to backend.' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function IncidentCard({ incident, triageResponse }) {
   return (
     <div className="incident-card">
       <h3>
@@ -31,26 +8,18 @@ export default function IncidentCard({ incident }) {
       </h3>
       <p><b>Sender:</b> {incident.sender_id}</p>
       <p><b>Receiver:</b> {incident.receiver_id}</p>
-      <p><b>Fraud Signal:</b> {incident.metadata?.fraud_detection_signal}</p>
+      <p><b>Alert Signal:</b> {incident.metadata?.error_detection_signal}</p>
       <p><b>Created:</b> {incident.created_at}</p>
-      <button
-        className="triage-btn"
-        onClick={runTriage}
-        disabled={loading}
-      >
-        {loading ? 'Running Triage...' : 'Run Triage'}
-      </button>
-      {response && (
+      {triageResponse && (
         <div className="triage-response" style={{
-          color: response.error ? 'var(--color-error)' : 'var(--color-primary)'
+          color: triageResponse.error ? 'var(--color-error)' : 'var(--color-primary)'
         }}>
           <b>Triage Result:</b>
           <pre>
-            {JSON.stringify(response, null, 2)}
+            {JSON.stringify(triageResponse, null, 2)}
           </pre>
         </div>
       )}
-
       {/* Styles */}
       <style jsx>{`
         .incident-card {
@@ -59,6 +28,7 @@ export default function IncidentCard({ incident }) {
           padding: 1.4rem;
           background: var(--bg-card);
           margin-bottom: 2rem;
+
           box-shadow: 0 1px 10px var(--shadow);
           transition: background 0.2s, color 0.2s;
         }
@@ -69,22 +39,6 @@ export default function IncidentCard({ incident }) {
         }
         .incident-card p {
           color: var(--text-secondary);
-        }
-        .triage-btn {
-          margin-top: 1rem;
-          padding: 0.65rem 1.2rem;
-          background: var(--color-primary);
-          color: #fff;
-          border: none;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: ${loading ? 'not-allowed' : 'pointer'};
-          font-size: 1rem;
-          transition: background 0.2s;
-        }
-        .triage-btn:disabled {
-          background: #64748b;
-          cursor: not-allowed;
         }
         .triage-response {
           margin-top: 1.2rem;
@@ -99,7 +53,6 @@ export default function IncidentCard({ incident }) {
           background: none;
           margin: 0;
         }
-        /* Responsive handled in parent */
       `}</style>
       <style jsx global>{`
         :root {

@@ -9,7 +9,7 @@
     "status": "PENDING",
     "currency": "USD",
     "metadata": {
-      "fraud_detection_signal": "bank server down"
+      "error_detection_signal": "bank server down"
     },
     "created_at": "2025-07-01T16:27:09+05:30",
     "updated_at": "2025-07-01T16:27:09+05:30"
@@ -24,7 +24,7 @@
     "status": "FAILED",
     "currency": "USD",
     "metadata": {
-      "fraud_detection_signal": "multiple declined attempts, card reported stolen"
+      "error_detection_signal": "multiple declined attempts, card reported stolen"
     },
     "created_at": "2025-07-01T18:00:00+05:30",
     "updated_at": "2025-07-01T18:02:10+05:30"
@@ -39,7 +39,7 @@
     "status": "SUCCEEDED",
     "currency": "USD",
     "metadata": {
-      "fraud_detection_signal": "none"
+      "error_detection_signal": "none"
     },
     "created_at": "2025-07-02T09:45:00+05:30",
     "updated_at": "2025-07-02T09:45:02+05:30"
@@ -54,7 +54,7 @@
     "status": "FAILED",
     "currency": "EUR",
     "metadata": {
-      "fraud_detection_signal": "ip address from blacklisted country, amount unusually high"
+      "error_detection_signal": "ip address from blacklisted country, amount unusually high"
     },
     "created_at": "2025-07-02T14:00:00+05:30",
     "updated_at": "2025-07-02T14:02:00+05:30"
@@ -69,7 +69,7 @@
     "status": "PENDING",
     "currency": "INR",
     "metadata": {
-      "fraud_detection_signal": "suspicious capture on flagged charge"
+      "error_detection_signal": "suspicious capture on flagged charge"
     },
     "created_at": "2025-07-03T10:00:00+05:30",
     "updated_at": "2025-07-03T10:00:00+05:30"
@@ -84,7 +84,7 @@
     "status": "SUCCEEDED",
     "currency": "GBP",
     "metadata": {
-      "fraud_detection_signal": "none"
+      "error_detection_signal": "none"
     },
     "created_at": "2025-07-03T17:15:30+05:30",
     "updated_at": "2025-07-03T17:15:30+05:30"

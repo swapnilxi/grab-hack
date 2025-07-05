@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import IncidentCard from '../components/IncidentCard/IncidentCard';
-import IncidentData from "../components/IncidentCard/IncidentData.json"
+import IncidentCard from '../components/IncidentTable/IncidentTable';
+import IncidentData from "../components/IncidentTable/IncidentData.json"
 
 export default function GTADashboardPage() {
   const [triageResponses, setTriageResponses] = useState({});
@@ -68,14 +68,11 @@ export default function GTADashboardPage() {
         </div>
       
       {error && <div style={{ color: '#dc2626', marginBottom: '1rem' }}>{error}</div>}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {IncidentData.map((incident, idx) => (
-          <IncidentCard
-            key={incident.transaction_id || idx}
-            incident={incident}
-            triageResponse={triageResponses[incident.transaction_id || idx]}
+      <div className="grid grid-cols-1 ">
+        <IncidentCard
+            incidents={IncidentData}
           />
-        ))}
+       
       </div>
     </div>
   );

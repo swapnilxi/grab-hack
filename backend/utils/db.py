@@ -4,20 +4,27 @@ import json
 import asyncio
 import asyncpg
 import boto3
+import logging
 from dotenv import load_dotenv
 
-# Load environment variables
+# === Logging Config ===
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
+
+# === Load environment variables ===
 load_dotenv()
 
-# AWS Credentials
-AWS_REGION = os.getenv("AWS_DEFAULT_REGION")
+# === AWS Credentials ===
+AWS_REGION = os.getenv("AWS_REGION")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_SESSION_TOKEN = os.getenv("AWS_SESSION_TOKEN")
-MODEL_ID = "amazon.titan-embed-text-v2"
-EMBED_DIM = 1536  # Titan V2 output
+MODEL_ID = "amazon.titan-embed-text-v2:0"
+EMBED_DIM = 1536  # Titan V2
 
-# DB
+# === DB ===
 DB_URL = os.getenv("DATABASE_URL")
 
 # === AWS Bedrock ===
@@ -33,7 +40,7 @@ def get_bedrock_client():
 def get_titan_embedding(text: str) -> list:
     try:
         client = get_bedrock_client()
-        body = { "inputText": text[:2000] }  # Truncate if needed
+        body = {"inputText": text[:2000]}  # Truncate if needed
         response = client.invoke_model(
             modelId=MODEL_ID,
             body=json.dumps(body),
@@ -43,7 +50,7 @@ def get_titan_embedding(text: str) -> list:
         result = json.loads(response["body"].read())
         return result["embedding"]
     except Exception as e:
-        print(f"[ERROR] Embedding failed: {e}")
+        logging.error(f"Embedding failed: {e}")
         return []
 
 # === PGVECTOR Setup ===
@@ -52,9 +59,10 @@ async def get_pool():
 
 async def init_db(pool):
     async with pool.acquire() as conn:
+        logging.info("Initializing database and extensions...")
         await conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
         await conn.execute(f"""
-            CREATE TABLE IF NOT EXISTS document_chunks (
+            CREATE TABLE IF NOT EXISTS GrabData (
                 id SERIAL PRIMARY KEY,
                 filepath TEXT UNIQUE,
                 content TEXT,
@@ -67,10 +75,12 @@ async def init_db(pool):
             USING ivfflat (embedding vector_cosine_ops)
             WITH (lists = 100);
         """)
+        logging.info("Database initialized.")
 
 # === Insert Logic ===
 async def insert_chunk(pool, filepath, content, embedding):
     if not embedding:
+        logging.warning(f"Skipping {filepath} due to empty embedding.")
         return
     embedding_str = "[" + ",".join(str(x) for x in embedding) + "]"
     async with pool.acquire() as conn:
@@ -80,8 +90,9 @@ async def insert_chunk(pool, filepath, content, embedding):
                 VALUES ($1, $2, $3::vector)
                 ON CONFLICT (filepath) DO NOTHING;
             """, filepath, content, embedding_str)
+            logging.info(f"Inserted: {filepath}")
         except Exception as e:
-            print(f"[ERROR] Insert failed for {filepath}: {e}")
+            logging.error(f"Insert failed for {filepath}: {e}")
 
 # === Search Logic ===
 async def fetch_similar(pool, embedding, limit=5):
@@ -94,7 +105,11 @@ async def fetch_similar(pool, embedding, limit=5):
         return rows
 
 # === File Scanner ===
-def load_all_files(root="datasets"):
+def load_all_files(root=None):
+    if root is None:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        root = os.path.abspath(os.path.join(script_dir, "../../datasets"))
+
     for dirpath, _, filenames in os.walk(root):
         for filename in filenames:
             path = os.path.join(dirpath, filename)
@@ -103,16 +118,21 @@ def load_all_files(root="datasets"):
                     with open(path, "r", encoding="utf-8", errors="ignore") as f:
                         yield path, f.read()
                 except Exception as e:
-                    print(f"[ERROR] Reading {path}: {e}")
+                    logging.error(f"Reading failed for {path}: {e}")
+
 
 # === Embed All ===
 async def embed_all_files():
     pool = await get_pool()
     await init_db(pool)
+    total = 0
     for filepath, content in load_all_files():
+        logging.info(f"Processing: {filepath}")
         short_content = content[:2000]
         embedding = get_titan_embedding(short_content)
         await insert_chunk(pool, filepath, short_content, embedding)
+        total += 1
+    logging.info(f"Embedding complete. Total files processed: {total}")
     await pool.close()
 
 # === CLI Entrypoint ===

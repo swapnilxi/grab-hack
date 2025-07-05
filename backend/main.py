@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Body
 from pydantic import BaseModel
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
-from utils.query import ask_question_from_db, ask_question_with_context
+from utils.query import ask_question_from_db
 
 
 

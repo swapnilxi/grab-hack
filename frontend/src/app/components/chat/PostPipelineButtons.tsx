@@ -18,7 +18,7 @@ export default function PostPipelineButtons({ receiverId, amount }: Props) {
     addMessage({ type: "bot", text: `🔄 Running ${agent} check...` });
 
     try {
-      const res = await axios.post(`http://localhost:8000/run-agent/${agent}`, {
+      const res = await axios.post(`http://localhost:8080/run-agent/${agent}`, {
         receiver_id: receiverId,
         amount: amount,
       });

@@ -30,7 +30,7 @@ export default function ChatUI() {
     addMessage({ type: "bot", text: `🤖 Processing payment...` });
 
     try {
-      const res = await axios.post("http://localhost:8000/run-pipeline", {
+      const res = await axios.post("http://localhost:8080/run-pipeline", {
         sender_id: "test@upi", // Mock sender_id to satisfy backend
         receiver_id: receiverId,
         amount: parseFloat(amount),
@@ -51,21 +51,18 @@ export default function ChatUI() {
     }
   };
 
-  // HANDLES CHATGPT-LIKE CHAT SUBMIT
-  // ADD THIS inside your ChatUI component
 
 const handleChatSend = async () => {
   if (chatInput.trim() === "") return;
   addMessage({ type: "user", text: chatInput });
+  setChatInput("");
+  setLoading(true); // Start loader
 
-  // FRAUD OVERRIDE LOGIC: if message is "yes", trigger backend fraud override and fraud agent rerun
   if (chatInput.trim().toLowerCase() === "yes") {
     try {
-      // Tell backend to override
-      const res = await axios.post("http://localhost:8000/chat-message", { message: "yes" });
+      const res = await axios.post("http://localhost:8080/ask", { question: "yes" });
       addMessage({ type: "bot", text: res.data.response || "Fraud override activated." });
-      // Now rerun fraud agent
-      const fraudRes = await axios.post("http://localhost:8000/run-agent/fraud", {
+      const fraudRes = await axios.post("http://localhost:8080/run-agent/fraud", {
         receiver_id: receiverId,
         amount: parseFloat(amount),
         confirm: "yes",
@@ -73,16 +70,21 @@ const handleChatSend = async () => {
       addMessage({ type: "bot", text: fraudRes.data.result || JSON.stringify(fraudRes.data) });
     } catch (err) {
       addMessage({ type: "bot", text: "❌ Something went wrong." });
+    } finally {
+      setLoading(false); // Stop loader
     }
   } else {
-    // Default echo for non-yes messages
-    setTimeout(() => {
-      addMessage({ type: "bot", text: `🤖 You said: ${chatInput}` });
-    }, 500);
+    try {
+      const res = await axios.post("http://localhost:8080/ask", { question: chatInput });
+      addMessage({ type: "bot", text: res.data.response });
+    } catch (err) {
+      addMessage({ type: "bot", text: "❌ Something went wrong." });
+    } finally {
+      setLoading(false); // Stop loader
+    }
   }
-  setChatInput("");
+  
 };
-
 
   // ENTER KEY SUBMIT FOR CHAT
   const onChatInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

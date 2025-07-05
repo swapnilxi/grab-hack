@@ -1,30 +1,18 @@
-"use client";
+import React from "react";
+import ReactMarkdown from "react-markdown";
 
-interface MessageBubbleProps {
-  type: "user" | "bot";
-  text: string;
-}
-
-export default function MessageBubble({ type, text }: MessageBubbleProps) {
-  const isUser = type === "user";
-
+export default function MessageBubble({ type, text }: { type: string; text: string }) {
+  const isBot = type === "bot";
   return (
-    <div className={isUser ? "text-right" : "text-left"}>
-      <div className={`flex ${isUser ? "justify-end" : "items-start space-x-2"}`}>
-        {!isUser && (
-          <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm">
-            🤖
-          </div>
-        )}
-        <div
-          className={`inline-block px-3 py-2 max-w-xs rounded-lg break-words ${
-            isUser
-              ? "bg-green-100 dark:bg-green-900 text-black dark:text-white"
-              : "bg-gray-200 dark:bg-zinc-700 text-black dark:text-white"
-          }`}
-        >
-          {text}
-        </div>
+    <div className={`flex ${isBot ? "justify-start" : "justify-end"}`}>
+      <div
+        className={`rounded-lg px-3 py-2 max-w-xs break-words whitespace-pre-wrap ${
+          isBot
+            ? "bg-gray-200 dark:bg-zinc-700 text-black dark:text-white"
+            : "bg-green-600 text-white"
+        }`}
+      >
+        {isBot ? <ReactMarkdown>{text}</ReactMarkdown> : text}
       </div>
     </div>
   );

@@ -36,6 +36,8 @@ frontend/.eslintcache
 *~
 
 # === Dataset ===
+datasets/
 dataset/
+
 
 

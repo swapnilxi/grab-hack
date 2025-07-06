@@ -8,6 +8,7 @@ This is a monorepo containing both the frontend (Next.js) and backend (FastAPI) 
 .
 ├── backend/         # FastAPI backend (Python)
 │   ├── main.py
+|   |-- src/(entry point for agents)
 │   ├── requirements.txt
 │   └── ...
 ├── frontend/        # Next.js frontend (React/TypeScript)

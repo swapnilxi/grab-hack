@@ -125,6 +125,7 @@ export default function IncidentTable({ incidents = [], triageResponses = {} }) 
         [id]: {
           ...prev[id],
           agentLoading: true,
+          agentRunningType: agentType, // Track which agent is running
           agentProgressStep: step,
           agentProgressMessages: progressMsgs,
           agentError: null,
@@ -154,6 +155,7 @@ export default function IncidentTable({ incidents = [], triageResponses = {} }) 
         [id]: {
           ...prev[id],
           agentLoading: false,
+          agentRunningType: null, // Reset after done
           agentProgressStep: progressMsgs.length,
           agentProgressMessages: progressMsgs,
           agentError: null,
@@ -166,6 +168,7 @@ export default function IncidentTable({ incidents = [], triageResponses = {} }) 
         [id]: {
           ...prev[id],
           agentLoading: false,
+          agentRunningType: null, // Reset after error
           agentError: e.message || "Error"
         }
       }));
@@ -257,10 +260,12 @@ export default function IncidentTable({ incidents = [], triageResponses = {} }) 
                                       transition: 'background 0.2s',
                                       display: 'inline-flex',
                                       alignItems: 'center',
-                                      gap: '0.5em'
+                                      gap: '0.5em',
+                                      opacity: state.agentLoading && state.agentRunningType !== 'healing' ? 0.6 : 1
                                     }}
+                                    // Only show loading for healing if healing is running
                                   >
-                                    {state.agentLoading ? (
+                                    {state.agentLoading && state.agentRunningType === 'healing' ? (
                                       <CircularProgress size={20} color="primary" sx={{ color: 'var(--color-primary) !important' }} style={{ marginRight: 6 }} />
                                     ) : null}
                                     Run Healing Agent
@@ -280,10 +285,12 @@ export default function IncidentTable({ incidents = [], triageResponses = {} }) 
                                       transition: 'background 0.2s',
                                       display: 'inline-flex',
                                       alignItems: 'center',
-                                      gap: '0.5em'
+                                      gap: '0.5em',
+                                      opacity: state.agentLoading && state.agentRunningType !== 'fraud' ? 0.6 : 1
                                     }}
+                                    // Only show loading for fraud if fraud is running
                                   >
-                                    {state.agentLoading ? (
+                                    {state.agentLoading && state.agentRunningType === 'fraud' ? (
                                       <CircularProgress size={20} color="primary" sx={{ color: 'var(--color-primary) !important' }} style={{ marginRight: 6 }} />
                                     ) : null}
                                     Run Fraud Agent
@@ -344,11 +351,11 @@ export default function IncidentTable({ incidents = [], triageResponses = {} }) 
                               )}
                               {state.triage.triage_decision === 'healing' ? (
                                 <>
-                                  <span>Healing completed. Action taken:</span> <span style={{ color: '#0f172a' }}>{state.agentResponse.recommended_action || 'N/A'}</span>
+                                  <span>Healing completed. Action taken:</span> <span style={{ color: '#0f172a' }}>{state.agentResponse.resolution || 'N/A'}</span>
                                 </>
                               ) : state.triage.triage_decision === 'fraud' ? (
                                 <>
-                                  <span>Fraud response executed:</span> <span style={{ color: '#0f172a' }}>{state.agentResponse.resolution || 'N/A'}</span>
+                                  <span>Fraud response executed:</span> <span style={{ color: '#0f172a' }}>{state.agentResponse.reason || state.agentResponse.resolution || 'N/A'}</span>
                                 </>
                               ) : null}
                               <div style={{ fontSize: '0.97em', color: '#475569', marginTop: 4 }}>

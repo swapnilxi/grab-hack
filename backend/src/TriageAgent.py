@@ -36,13 +36,15 @@ class TriageAgent:
             "Reply with a JSON object ONLY, in the format:\n"
             "{\n"
             '  "triage_decision": "fraud|healing|failed|approved",\n'
-            '  "reason": "short reason for your decision"\n'
+            '  "reason": "short reason for your decision",\n'
+            '  "suggested_resolution": "brief recommended next step for the operator"\n'
             "}\n"
             "Example:\n"
-            '{ "triage_decision": "fraud", "reason": "Suspicious capture on a flagged charge" }\n\n'
+            '{ "triage_decision": "fraud", "reason": "Suspicious capture on a flagged charge", "suggested_resolution": "Run fraud agent" }\n\n'
             "Transaction details:\n"
             f"{json.dumps(payload, indent=2)}\n"
         )
+
 
         messages = [
             {"role": "user", "content": prompt}

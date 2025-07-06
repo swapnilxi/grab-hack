@@ -70,8 +70,10 @@ export default function GTADashboardPage() {
       {error && <div style={{ color: '#dc2626', marginBottom: '1rem' }}>{error}</div>}
       <div className="grid grid-cols-1 ">
         <IncidentCard
-            incidents={IncidentData}
-          />
+  incidents={IncidentData}
+  triageResponses={triageResponses}
+/>
+
        
       </div>
     </div>

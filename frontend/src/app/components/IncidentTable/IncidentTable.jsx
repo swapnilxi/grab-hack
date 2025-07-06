@@ -1,43 +1,244 @@
 'use client';
 
+import React, { useState } from 'react';
+import CircularProgress from '@mui/material/CircularProgress';
+
+// Arrow Icon component
+function Arrow({ expanded, loading }) {
+  return (
+    <span style={{
+      display: 'inline-block',
+      width: 24, textAlign: 'center', fontSize: 18, cursor: 'pointer', userSelect: 'none'
+    }}>
+      {loading ? <span className="loader" /> : (expanded ? '▼' : '▶')}
+      <style jsx>{`
+        .loader {
+          display: inline-block;
+          width: 1em;
+          height: 1em;
+          border: 2px solid #60a5fa;
+          border-top: 2px solid #b6b7b9;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+          vertical-align: middle;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg);}
+          100% { transform: rotate(360deg);}
+        }
+      `}</style>
+    </span>
+  );
+}
+
+function SenderReceiverCell({ sender, receiver }) {
+  return (
+    <span>
+      <b>{sender}</b> <span style={{ color: '#94a3b8' }}>→</span> <b>{receiver}</b>
+    </span>
+  );
+}
+
 export default function IncidentTable({ incidents = [] }) {
+  // Per-row state: { [transaction_id]: { expanded, loading, error, triage, agentLoading, agentResponse, agentError } }
+  const [rowState, setRowState] = useState({});
+
+  // Handles row expand/collapse and triage fetch
+  const handleArrowClick = async (incident) => {
+    const id = incident.transaction_id || incident.id;
+    const current = rowState[id] || {};
+    if (current.expanded) {
+      setRowState(prev => ({ ...prev, [id]: { ...current, expanded: false } }));
+      return;
+    }
+    if (current.triage) {
+      setRowState(prev => ({ ...prev, [id]: { ...current, expanded: true } }));
+      return;
+    }
+    setRowState(prev => ({ ...prev, [id]: { ...current, expanded: true, loading: true, error: null } }));
+    try {
+      const res = await fetch('http://localhost:8080/run-triage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(incident),
+      });
+      if (!res.ok) throw new Error('Backend error');
+      const data = await res.json();
+      setRowState(prev => ({
+        ...prev,
+        [id]: { ...current, expanded: true, loading: false, triage: data, error: null }
+      }));
+    } catch (e) {
+      setRowState(prev => ({ ...prev, [id]: { ...current, expanded: true, loading: false, error: e.message || 'Error' } }));
+    }
+  };
+
+  // Handles healing/fraud agent
+  const handleRunAgent = async (incident, id, agentType) => {
+    setRowState(prev => ({
+      ...prev,
+      [id]: { ...prev[id], agentLoading: true, agentError: null }
+    }));
+    try {
+      const res = await fetch(
+        agentType === "healing"
+          ? 'http://localhost:8080/run-healing-agent'
+          : 'http://localhost:8080/run-fraud-agent',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(incident),
+        }
+      );
+      if (!res.ok) throw new Error('Backend error');
+      const data = await res.json();
+      setRowState(prev => ({
+        ...prev,
+        [id]: { ...prev[id], agentLoading: false, agentResponse: data, agentError: null }
+      }));
+    } catch (e) {
+      setRowState(prev => ({
+        ...prev,
+        [id]: { ...prev[id], agentLoading: false, agentError: e.message || "Error" }
+      }));
+    }
+  };
+
   return (
     <div className="incident-table-container">
       <table className="incident-table">
         <thead>
           <tr>
+            <th></th>
             <th>Status</th>
             <th>Amount</th>
             <th>Currency</th>
-            <th>Sender</th>
-            <th>Receiver</th>
+            <th>Sender → Receiver</th>
             <th>Alert Signal</th>
             <th>Created</th>
           </tr>
         </thead>
         <tbody>
-          {(incidents || []).map((incident, idx) => (
-            <tr key={incident.transaction_id || idx}>
-              <td>
-                <span className={`badge badge-${(incident.status ? incident.status.toLowerCase() : 'unknown')}`}>
-                  {incident.status || 'Unknown'}
-                </span>
-              </td>
-              <td>${incident.amount}</td>
-              <td>{incident.currency}</td>
-              <td>{incident.sender_id}</td>
-              <td>{incident.receiver_id}</td>
-              <td>{incident.metadata?.error_detection_signal}</td>
-              <td>
-                <span className="created-at">
-                  {incident.created_at}
-                </span>
-              </td>
-            </tr>
-          ))}
+          {(incidents || []).map((incident, idx) => {
+            const id = incident.transaction_id || incident.id || idx;
+            const state = rowState[id] || {};
+            const expanded = !!state.expanded;
+            return (
+              <React.Fragment key={id}>
+                <tr>
+                  <td onClick={() => handleArrowClick(incident)}>
+                    <Arrow expanded={expanded} loading={!!state.loading} />
+                  </td>
+                  <td>
+                    <span className={`badge badge-${(incident.status ? incident.status.toLowerCase() : 'unknown')}`}>
+                      {incident.status || 'Unknown'}
+                    </span>
+                  </td>
+                  <td>${incident.amount}</td>
+                  <td>{incident.currency}</td>
+                  <td>
+                    <SenderReceiverCell sender={incident.sender_id} receiver={incident.receiver_id} />
+                  </td>
+                  <td>{incident.metadata?.error_detection_signal}</td>
+                  <td>
+                    <span className="created-at">
+                      {incident.created_at}
+                    </span>
+                  </td>
+                </tr>
+                {expanded && (
+                  <tr>
+                    <td colSpan={7} style={{ background: 'var(--bg-card)' }}>
+                      {/* Loading triage */}
+                      {state.loading ? (
+                        <div style={{ padding: 24, fontWeight: 500 }}>
+                          <span className="loader" /> Running triage agent...
+                        </div>
+                      ) : state.error ? (
+                        <div style={{ color: "#dc2626", padding: 16 }}>
+                          Error: {state.error}
+                        </div>
+                      ) : state.triage ? (
+                        <div>
+                          <div style={{ marginBottom: 12 }}>
+                            <b>Triage Decision:</b> {state.triage.triage_decision} <br />
+                            <b>Reason:</b> {state.triage.reason} <br />
+                            <b>Suggested Resolution:</b> {state.triage.suggested_resolution}
+                          </div>
+                          {/* Healing/Fraud agent actions */}
+                          {["healing", "fraud"].includes(state.triage.triage_decision) && (
+                            <div style={{ marginBottom: 12 }}>
+                              <button
+                                onClick={() =>
+                                  handleRunAgent(incident, id, state.triage.triage_decision)
+                                }
+                                disabled={!!state.agentLoading}
+                                style={{
+                                  padding: '0.6em 1.5em',
+                                  background: '#2563eb',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  fontWeight: 600,
+                                  fontSize: '1.02em',
+                                  cursor: state.agentLoading ? 'not-allowed' : 'pointer',
+                                  transition: 'background 0.2s',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.5em'
+                                }}
+                              >
+                                {state.agentLoading ? (
+                                  <CircularProgress size={20} color="inherit" style={{ marginRight: 6 }} />
+                                ) : null}
+                                {state.triage.triage_decision === "healing"
+                                  ? "Run Healing Agent"
+                                  : "Run Fraud Agent"}
+                              </button>
+                            </div>
+                          )}
+                          {/* Agent response (fraud or healing) */}
+                          {state.agentResponse && (
+                            <div>
+                              <b>Agent Response:</b>
+                              <pre style={{
+                                margin: 0,
+                                fontSize: '1em',
+                                background: 'var(--bg-card)',
+                                borderRadius: 8,
+                                padding: 12,
+                                color: 'var(--text-primary)'
+                              }}>
+                                {JSON.stringify(state.agentResponse, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                          {state.agentError && (
+                            <div style={{ color: "#dc2626", marginTop: 8 }}>
+                              Error: {state.agentError}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <pre style={{
+                          margin: 0,
+                          fontSize: '1em',
+                          background: 'var(--bg-card)',
+                          borderRadius: 8,
+                          padding: 12,
+                          color: 'var(--text-primary)'
+                        }}>
+                          {JSON.stringify(incident, null, 2)}
+                        </pre>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            );
+          })}
         </tbody>
       </table>
-      {/* Styles */}
       <style jsx>{`
         .incident-table-container {
           width: 100%;

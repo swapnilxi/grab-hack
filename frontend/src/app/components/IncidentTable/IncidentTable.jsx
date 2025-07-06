@@ -337,9 +337,9 @@ export default function IncidentTable({ incidents = [], triageResponses = {} }) 
                           {/* Agent response (fraud or healing) */}
                           {state.agentResponse && !state.agentLoading && (
                             <div style={{ margin: '12px 0', padding: '10px 16px', background: '#f1f5f9', borderRadius: 8, color: '#01b04e', fontWeight: 600 }}>
-                              {state.agentResponse.reason && (
+                              {state.agentResponse.resolution && (
                                 <div style={{ color: '#475569', marginBottom: 6, fontWeight: 500 }}>
-                                  Reason: <span style={{ color: '#0f172a' }}>{state.agentResponse.reason}</span>
+                                  Resolution: <span style={{ color: '#0f172a' }}>{state.agentResponse.resolution}</span>
                                 </div>
                               )}
                               {state.triage.triage_decision === 'healing' ? (

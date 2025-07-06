@@ -78,9 +78,8 @@ class HealingAgent:
                 )
                 return {
                     "healing_needed": healing_needed,
-                    "reason": model_result.get("reason", ""),
                     "recommended_action": model_result.get("recommended_action", ""),
-                    "resolution": resolution,
+                    "resolution": f"Recommended action: {model_result.get('recommended_action', '')}",
                     "updated_status": updated_status,
                     "agent": "Healing Agent running"
                 }

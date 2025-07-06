@@ -31,7 +31,7 @@ export default function ChatUI() {
 
     try {
       const res = await axios.post("http://localhost:8080/run-pipeline", {
-        sender_id: "test@upi", // Mock sender_id to satisfy backend
+        sender_id: "test@email.com", // Mock sender_id to satisfy backend
         receiver_id: receiverId,
         amount: parseFloat(amount),
       });
@@ -114,7 +114,7 @@ const handleChatSend = async () => {
           <div className="bg-gray-200 dark:bg-zinc-700 text-black dark:text-white rounded-lg px-3 py-2 w-full">
             <div className="space-y-2">
               <input
-                placeholder="Receiver UPI ID"
+                placeholder="Receiver payment ID"
                 className="w-full p-2 border rounded bg-white text-black border-gray-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-700"
                 value={receiverId}
                 onChange={(e) => setReceiverId(e.target.value)}

@@ -29,7 +29,7 @@ class PaymentRequest(BaseModel):
     sender_id: str
     receiver_id: str
     amount: float
-    upi_id: Optional[str] = None
+    id: Optional[str] = None
     transaction_id: Optional[str] = None
 
 fraud_check_override = {"allow": False}  # GLOBAL DEMO STATE
@@ -72,7 +72,7 @@ def root():
 @app.post("/run-agent/{agent_name}")
 def run_single_agent(agent_name: str, payload: dict = Body(...)):
     mock_request = PaymentRequest(
-        sender_id="demo@upi", receiver_id=payload.get("receiver_id", "demo@upi"), amount=payload.get("amount", 0)
+        sender_id="demo@id", receiver_id=payload.get("receiver_id", "demo@id"), amount=payload.get("amount", 0)
     )
     # Fraud check: expects payload.get("confirm") == "yes"
     if agent_name == "fraud":

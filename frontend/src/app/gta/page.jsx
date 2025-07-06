@@ -8,6 +8,7 @@ export default function GTADashboardPage() {
   const [triageResponses, setTriageResponses] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false); // Chat modal state
 
   const runTriageAll = async () => {
     setLoading(true);
@@ -44,7 +45,84 @@ export default function GTADashboardPage() {
 
   return (
     <div>
-        <div className='flex justify-end items-center'>
+      {/* Chat Icon Button */}
+      <button
+        onClick={() => setIsChatOpen(true)}
+        style={{
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
+          background: '#2563eb',
+          border: 'none',
+          borderRadius: '50%',
+          width: '56px',
+          height: '56px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          cursor: 'pointer',
+          zIndex: 1000,
+        }}
+        aria-label="Open Chat"
+      >
+        {/* Simple chat icon SVG */}
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      </button>
+
+      {/* Chat Modal */}
+      {isChatOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: '12px',
+            width: '90vw',
+            maxWidth: '500px',
+            height: '80vh',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            <button
+              onClick={() => setIsChatOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '12px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                color: '#888',
+                cursor: 'pointer',
+                zIndex: 10,
+              }}
+              aria-label="Close Chat"
+            >
+              &times;
+            </button>
+            <iframe
+              src="http://localhost:3000"
+              title="Chatbot"
+              style={{ flex: 1, border: 'none', borderRadius: '0 0 12px 12px', width: '100%', height: '100%' }}
+              allow="clipboard-write; clipboard-read"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className='flex justify-end items-center'>
         <button
         onClick={runTriageAll}
         disabled={loading}

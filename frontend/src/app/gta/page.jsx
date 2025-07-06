@@ -14,27 +14,26 @@ export default function GTADashboardPage() {
     setError(null);
     setTriageResponses({});
     try {
-      // Run triage for all incidents in parallel
-      const results = await Promise.all(
-        IncidentData.map(async (incident) => {
-          try {
-            const res = await fetch('http://localhost:8080/run-triage', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(incident),
-            });
-            const data = await res.json();
-            return { id: incident.transaction_id, data };
-          } catch (e) {
-            return { id: incident.transaction_id, data: { error: 'Failed to connect to backend.' } };
-          }
-        })
-      );
-      // Map responses by transaction_id
+      // Run triage for all incidents sequentially with 1s delay between requests
       const responseMap = {};
-      results.forEach(({ id, data }, idx) => {
-        responseMap[id || idx] = data;
-      });
+      for (let i = 0; i < IncidentData.length; i++) {
+        const incident = IncidentData[i];
+        try {
+          const res = await fetch('http://localhost:8080/run-triage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(incident),
+          });
+          const data = await res.json();
+          responseMap[incident.transaction_id || i] = data;
+        } catch (e) {
+          responseMap[incident.transaction_id || i] = { error: 'Failed to connect to backend.' };
+        }
+        // Wait 1s before next request (rate limit)
+        if (i < IncidentData.length - 1) {
+          await new Promise(res => setTimeout(res, 1000));
+        }
+      }
       setTriageResponses(responseMap);
     } catch (e) {
       setError('Failed to run triage for all incidents.');

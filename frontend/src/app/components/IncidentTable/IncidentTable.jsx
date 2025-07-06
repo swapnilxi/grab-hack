@@ -39,9 +39,31 @@ function SenderReceiverCell({ sender, receiver }) {
   );
 }
 
-export default function IncidentTable({ incidents = [] }) {
+export default function IncidentTable({ incidents = [], triageResponses = {} }) {
   // Per-row state: { [transaction_id]: { expanded, loading, error, triage, agentLoading, agentResponse, agentError, agentProgressStep, agentProgressMessages } }
   const [rowState, setRowState] = useState({});
+
+  // Expand and set triage for all rows if triageResponses is updated (for Run Triage All)
+  React.useEffect(() => {
+    if (triageResponses && Object.keys(triageResponses).length > 0) {
+      setRowState(prev => {
+        const newState = { ...prev };
+        (incidents || []).forEach((incident, idx) => {
+          const id = incident.transaction_id || incident.id || idx;
+          if (triageResponses[id]) {
+            newState[id] = {
+              ...newState[id],
+              expanded: true,
+              loading: false,
+              triage: triageResponses[id],
+              error: triageResponses[id].error || null
+            };
+          }
+        });
+        return newState;
+      });
+    }
+  }, [triageResponses, incidents]);
 
   // Progress messages template
   const getAgentProgressMessages = (agentType, triage) => {

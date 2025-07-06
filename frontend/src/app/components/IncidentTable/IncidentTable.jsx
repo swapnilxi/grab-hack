@@ -97,9 +97,19 @@ export default function IncidentTable({ incidents = [], triageResponses = {} }) 
       });
       if (!res.ok) throw new Error('Backend error');
       const data = await res.json();
+      // PATCH: If triage_decision is missing but both healing and fraud are needed, set it manually
+      let triage = data;
+      if (
+        triage.triage_decision === undefined &&
+        triage.reason &&
+        triage.reason.toLowerCase().includes('healing') &&
+        triage.reason.toLowerCase().includes('fraud')
+      ) {
+        triage = { ...triage, triage_decision: 'healing_and_fraud' };
+      }
       setRowState(prev => ({
         ...prev,
-        [id]: { ...current, expanded: true, loading: false, triage: data, error: null }
+        [id]: { ...current, expanded: true, loading: false, triage, error: null }
       }));
     } catch (e) {
       setRowState(prev => ({ ...prev, [id]: { ...current, expanded: true, loading: false, error: e.message || 'Error' } }));
@@ -227,37 +237,92 @@ export default function IncidentTable({ incidents = [], triageResponses = {} }) 
                             <b>Suggested Resolution:</b> {state.triage.suggested_resolution}
                           </div>
                           {/* Healing/Fraud agent actions */}
-                          {["healing", "fraud"].includes(state.triage.triage_decision) && (
-                            <div style={{ marginBottom: 12 }}>
-                              <button
-                                onClick={() =>
-                                  handleRunAgent(incident, id, state.triage.triage_decision, state.triage)
-                                }
-                                disabled={!!state.agentLoading}
-                                style={{
-                                  padding: '0.6em 1.5em',
-                                  background: '#2563eb',
-                                  color: '#fff',
-                                  border: 'none',
-                                  borderRadius: '8px',
-                                  fontWeight: 600,
-                                  fontSize: '1.02em',
-                                  cursor: state.agentLoading ? 'not-allowed' : 'pointer',
-                                  transition: 'background 0.2s',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.5em'
-                                }}
-                              >
-                                {state.agentLoading ? (
-                                  <CircularProgress size={20} color="primary" sx={{ color: 'var(--color-primary) !important' }} style={{ marginRight: 6 }} />
-                                ) : null}
-                                {state.triage.triage_decision === "healing"
-                                  ? "Run Healing Agent"
-                                  : "Run Fraud Agent"}
-                              </button>
-                            </div>
-                          )}
+                          {(() => {
+                            // Show both buttons if triage_decision is 'healing_and_fraud', else show one
+                            if (state.triage.triage_decision === 'healing_and_fraud') {
+                              return (
+                                <div style={{ marginBottom: 12, display: 'flex', gap: 12 }}>
+                                  <button
+                                    onClick={() => handleRunAgent(incident, id, 'healing', state.triage)}
+                                    disabled={!!state.agentLoading}
+                                    style={{
+                                      padding: '0.6em 1.5em',
+                                      background: '#01b04e',
+                                      color: '#fff',
+                                      border: 'none',
+                                      borderRadius: '8px',
+                                      fontWeight: 600,
+                                      fontSize: '1.02em',
+                                      cursor: state.agentLoading ? 'not-allowed' : 'pointer',
+                                      transition: 'background 0.2s',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.5em'
+                                    }}
+                                  >
+                                    {state.agentLoading ? (
+                                      <CircularProgress size={20} color="primary" sx={{ color: 'var(--color-primary) !important' }} style={{ marginRight: 6 }} />
+                                    ) : null}
+                                    Run Healing Agent
+                                  </button>
+                                  <button
+                                    onClick={() => handleRunAgent(incident, id, 'fraud', state.triage)}
+                                    disabled={!!state.agentLoading}
+                                    style={{
+                                      padding: '0.6em 1.5em',
+                                      background: '#2563eb',
+                                      color: '#fff',
+                                      border: 'none',
+                                      borderRadius: '8px',
+                                      fontWeight: 600,
+                                      fontSize: '1.02em',
+                                      cursor: state.agentLoading ? 'not-allowed' : 'pointer',
+                                      transition: 'background 0.2s',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.5em'
+                                    }}
+                                  >
+                                    {state.agentLoading ? (
+                                      <CircularProgress size={20} color="primary" sx={{ color: 'var(--color-primary) !important' }} style={{ marginRight: 6 }} />
+                                    ) : null}
+                                    Run Fraud Agent
+                                  </button>
+                                </div>
+                              );
+                            } else if (["healing", "fraud"].includes(state.triage.triage_decision)) {
+                              return (
+                                <div style={{ marginBottom: 12 }}>
+                                  <button
+                                    onClick={() => handleRunAgent(incident, id, state.triage.triage_decision, state.triage)}
+                                    disabled={!!state.agentLoading}
+                                    style={{
+                                      padding: '0.6em 1.5em',
+                                      background: state.triage.triage_decision === 'healing' ? '#01b04e' : '#2563eb',
+                                      color: '#fff',
+                                      border: 'none',
+                                      borderRadius: '8px',
+                                      fontWeight: 600,
+                                      fontSize: '1.02em',
+                                      cursor: state.agentLoading ? 'not-allowed' : 'pointer',
+                                      transition: 'background 0.2s',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.5em'
+                                    }}
+                                  >
+                                    {state.agentLoading ? (
+                                      <CircularProgress size={20} color="primary" sx={{ color: 'var(--color-primary) !important' }} style={{ marginRight: 6 }} />
+                                    ) : null}
+                                    {state.triage.triage_decision === "healing"
+                                      ? "Run Healing Agent"
+                                      : "Run Fraud Agent"}
+                                  </button>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                           {/* Agent progress status */}
                           {state.agentLoading && state.agentProgressMessages ? (
                             <div style={{
@@ -271,10 +336,12 @@ export default function IncidentTable({ incidents = [], triageResponses = {} }) 
                           ) : null}
                           {/* Agent response (fraud or healing) */}
                           {state.agentResponse && !state.agentLoading && (
-                            (() => { console.log('agentResponse:', state.agentResponse); return null; })()
-                          )}
-                          {state.agentResponse && !state.agentLoading && (
                             <div style={{ margin: '12px 0', padding: '10px 16px', background: '#f1f5f9', borderRadius: 8, color: '#01b04e', fontWeight: 600 }}>
+                              {state.agentResponse.reason && (
+                                <div style={{ color: '#475569', marginBottom: 6, fontWeight: 500 }}>
+                                  Reason: <span style={{ color: '#0f172a' }}>{state.agentResponse.reason}</span>
+                                </div>
+                              )}
                               {state.triage.triage_decision === 'healing' ? (
                                 <>
                                   <span>Healing completed. Action taken:</span> <span style={{ color: '#0f172a' }}>{state.agentResponse.recommended_action || 'N/A'}</span>

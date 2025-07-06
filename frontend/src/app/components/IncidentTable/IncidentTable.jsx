@@ -274,7 +274,7 @@ export default function IncidentTable({ incidents = [], triageResponses = {} }) 
                             (() => { console.log('agentResponse:', state.agentResponse); return null; })()
                           )}
                           {state.agentResponse && !state.agentLoading && (
-                            <div style={{ margin: '12px 0', padding: '10px 16px', background: '#f1f5f9', borderRadius: 8, color: '#2563eb', fontWeight: 600 }}>
+                            <div style={{ margin: '12px 0', padding: '10px 16px', background: '#f1f5f9', borderRadius: 8, color: '#01b04e', fontWeight: 600 }}>
                               {state.triage.triage_decision === 'healing' ? (
                                 <>
                                   <span>Healing completed. Action taken:</span> <span style={{ color: '#0f172a' }}>{state.agentResponse.recommended_action || 'N/A'}</span>

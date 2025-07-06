@@ -36,10 +36,10 @@
     "transaction_id": "0xb98c938e1ae56d41162d0e64cd7c76543b01f1504a653dbef0ae1e44999de223",
     "request_id": "0x78ad832d9384937fd52028787f2721cb14616f1ffa8a44319a5958d22b18b488",
     "charge_id": "0x900bce1f868c8bae75b4bef7b5c2346a61158f4b5cdeb8c2a46ba40e93e67987",
-    "status": "SUCCEEDED",
+    "status": "FAILED",
     "currency": "USD",
     "metadata": {
-      "error_detection_signal": "none"
+      "error_detection_signal": "server error, suspicious IP, card reported stolen"
     },
     "created_at": "2025-07-02T09:45:00+05:30",
     "updated_at": "2025-07-02T09:45:02+05:30"

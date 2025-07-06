@@ -40,8 +40,19 @@ function SenderReceiverCell({ sender, receiver }) {
 }
 
 export default function IncidentTable({ incidents = [] }) {
-  // Per-row state: { [transaction_id]: { expanded, loading, error, triage, agentLoading, agentResponse, agentError } }
+  // Per-row state: { [transaction_id]: { expanded, loading, error, triage, agentLoading, agentResponse, agentError, agentProgressStep, agentProgressMessages } }
   const [rowState, setRowState] = useState({});
+
+  // Progress messages template
+  const getAgentProgressMessages = (agentType, triage) => {
+    const agentName = agentType === "healing" ? "Healing" : "Fraud";
+    return [
+      `${agentName} agent is running...`,
+      `Applying the suggested changes - ${triage.suggested_resolution || "N/A"}`,
+      `${agentName} check is done, check or update status anytime`,
+      `Updating the status, sending for human review...`
+    ];
+  };
 
   // Handles row expand/collapse and triage fetch
   const handleArrowClick = async (incident) => {
@@ -73,12 +84,24 @@ export default function IncidentTable({ incidents = [] }) {
     }
   };
 
-  // Handles healing/fraud agent
-  const handleRunAgent = async (incident, id, agentType) => {
-    setRowState(prev => ({
-      ...prev,
-      [id]: { ...prev[id], agentLoading: true, agentError: null }
-    }));
+  // Progress demo function for the agent
+  const runAgentDemoSequence = async (incident, id, agentType, triage) => {
+    const progressMsgs = getAgentProgressMessages(agentType, triage);
+    for (let step = 0; step < progressMsgs.length; step++) {
+      setRowState(prev => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          agentLoading: true,
+          agentProgressStep: step,
+          agentProgressMessages: progressMsgs,
+          agentError: null,
+          agentResponse: null,
+        }
+      }));
+      await new Promise(res => setTimeout(res, 1200));
+    }
+    // Now call backend as usual:
     try {
       const res = await fetch(
         agentType === "healing"
@@ -94,14 +117,29 @@ export default function IncidentTable({ incidents = [] }) {
       const data = await res.json();
       setRowState(prev => ({
         ...prev,
-        [id]: { ...prev[id], agentLoading: false, agentResponse: data, agentError: null }
+        [id]: {
+          ...prev[id],
+          agentLoading: false,
+          agentProgressStep: progressMsgs.length,
+          agentProgressMessages: progressMsgs,
+          agentError: null,
+          agentResponse: data
+        }
       }));
     } catch (e) {
       setRowState(prev => ({
         ...prev,
-        [id]: { ...prev[id], agentLoading: false, agentError: e.message || "Error" }
+        [id]: {
+          ...prev[id],
+          agentLoading: false,
+          agentError: e.message || "Error"
+        }
       }));
     }
+  };
+
+  const handleRunAgent = (incident, id, agentType, triage) => {
+    runAgentDemoSequence(incident, id, agentType, triage);
   };
 
   return (
@@ -149,7 +187,6 @@ export default function IncidentTable({ incidents = [] }) {
                 {expanded && (
                   <tr>
                     <td colSpan={7} style={{ background: 'var(--bg-card)' }}>
-                      {/* Loading triage */}
                       {state.loading ? (
                         <div style={{ padding: 24, fontWeight: 500 }}>
                           <span className="loader" /> Running triage agent...
@@ -170,7 +207,7 @@ export default function IncidentTable({ incidents = [] }) {
                             <div style={{ marginBottom: 12 }}>
                               <button
                                 onClick={() =>
-                                  handleRunAgent(incident, id, state.triage.triage_decision)
+                                  handleRunAgent(incident, id, state.triage.triage_decision, state.triage)
                                 }
                                 disabled={!!state.agentLoading}
                                 style={{
@@ -189,7 +226,7 @@ export default function IncidentTable({ incidents = [] }) {
                                 }}
                               >
                                 {state.agentLoading ? (
-                                  <CircularProgress size={20} color="inherit" style={{ marginRight: 6 }} />
+                                  <CircularProgress size={20} color="primary" sx={{ color: 'var(--color-primary) !important' }} style={{ marginRight: 6 }} />
                                 ) : null}
                                 {state.triage.triage_decision === "healing"
                                   ? "Run Healing Agent"
@@ -197,20 +234,31 @@ export default function IncidentTable({ incidents = [] }) {
                               </button>
                             </div>
                           )}
+                          {/* Agent progress status */}
+                          {state.agentLoading && state.agentProgressMessages ? (
+                            <div style={{
+                              margin: "14px 0", minHeight: 36, display: 'flex', alignItems: 'center', gap: 10, fontWeight: 500
+                            }}>
+                              <CircularProgress size={18} color="primary" sx={{ color: 'var(--color-primary) !important' }} style={{ marginRight: 6 }} />
+                              <span>
+                                {state.agentProgressMessages[state.agentProgressStep] || "Working..."}
+                              </span>
+                            </div>
+                          ) : null}
                           {/* Agent response (fraud or healing) */}
-                          {state.agentResponse && (
-                            <div>
-                              <b>Agent Response:</b>
-                              <pre style={{
-                                margin: 0,
-                                fontSize: '1em',
-                                background: 'var(--bg-card)',
-                                borderRadius: 8,
-                                padding: 12,
-                                color: 'var(--text-primary)'
-                              }}>
-                                {JSON.stringify(state.agentResponse, null, 2)}
-                              </pre>
+                          {state.agentResponse && !state.agentLoading && (
+                            <div style={{
+                              marginTop: 18, padding: 18,
+                              background: 'var(--bg-card)', borderRadius: 10, boxShadow: '0 1px 4px #0001',
+                              color: 'var(--text-primary)',
+                              display: 'flex', flexDirection: 'column', gap: 8
+                            }}>
+                              <div style={{ fontSize: '1.18em', fontWeight: 700, color: 'var(--color-primary)' }}>
+                                Resolution: <span style={{ color: 'var(--text-primary)' }}>{state.agentResponse.resolution}</span>
+                              </div>
+                              <div style={{ fontSize: '1.08em', fontWeight: 600, color: 'var(--color-primary)' }}>
+                                Updated Status: <span style={{ color: 'var(--text-primary)' }}>{state.agentResponse.updated_status}</span>
+                              </div>
                             </div>
                           )}
                           {state.agentError && (

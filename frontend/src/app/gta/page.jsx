@@ -43,8 +43,73 @@ export default function GTADashboardPage() {
     }
   };
 
+  // Helper to compute stats for the summary card
+  const getTriageStats = () => {
+    const total = IncidentData.length;
+    let resolved = 0, fraud = 0, healing = 0, uncertain = 0;
+    Object.values(triageResponses).forEach(resp => {
+      if (resp && resp.triage_decision) {
+        resolved++;
+        if (resp.triage_decision === 'fraud') fraud++;
+        else if (resp.triage_decision === 'healing') healing++;
+        else uncertain++;
+      }
+    });
+    return {
+      total,
+      resolved,
+      fraud,
+      healing,
+      uncertain,
+      percent: 90 // Always show 90% as per user request
+    };
+  };
+  const stats = getTriageStats();
+
   return (
     <div>
+      {/* Summary Card - concise, left side, always 90%, light mode only */}
+      <div style={{
+        position: 'absolute', // Use absolute to avoid overlaying main content
+        top: "17%",
+        left: 38,
+        minWidth: 160,
+        background: '#fff',
+        borderRadius: 10,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        padding: '0.7rem 1rem',
+        zIndex: 1200,
+        fontSize: '1rem',
+        color: '#1e293b',
+        border: '1px solid #e2e8f0',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: 5,
+        pointerEvents: 'none', // Prevents blocking UI
+        userSelect: 'none',
+      }}>
+        <div style={{ fontWeight: 700, fontSize: '1.05em' }}>Resolved</div>
+        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#2563eb', marginBottom: 2 }}>
+          {stats.percent}% <span style={{ fontSize: '0.95rem', fontWeight: 400, color: '#64748b', marginLeft: 4 }}>(demo value)</span>
+        </div>
+        {/* Legends in one row */}
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 10, fontSize: '0.95em', marginTop: 2 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ width: 9, height: 9, borderRadius: 2, background: '#f87171', display: 'inline-block' }}></span>
+            <span>Fraud</span>
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ width: 9, height: 9, borderRadius: 2, background: '#34d399', display: 'inline-block' }}></span>
+            <span>Healing</span>
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ width: 9, height: 9, borderRadius: 2, background: '#fbbf24', display: 'inline-block' }}></span>
+            <span>Uncertain</span>
+          </span>
+        </div>
+      </div>
+
       {/* Chat Icon Button */}
       <button
         onClick={() => setIsChatOpen(true)}
@@ -122,27 +187,26 @@ export default function GTADashboardPage() {
         </div>
       )}
 
-      <div className='flex justify-end items-center'>
+      <div className='flex justify-end items-center' style={{ gap: '2rem' }}>
         <button
-        onClick={runTriageAll}
-        disabled={loading}
-        style={{
-          marginBottom: '2rem',
-          padding: '0.8rem 1.6rem',
-          background: '#2563eb',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '8px',
-          fontWeight: 600,
-          fontSize: '1.1rem',
-          cursor: loading ? 'not-allowed' : 'pointer',
-          transition: 'background 0.2s',
-        }}
-      >
-        {loading ? 'Running Triage for All...' : 'Run Triage for All'}
-      </button>
-
-        </div>
+          onClick={runTriageAll}
+          disabled={loading}
+          style={{
+            marginBottom: '2rem',
+            padding: '0.8rem 1.6rem',
+            background: '#2563eb',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: 600,
+            fontSize: '1.1rem',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            transition: 'background 0.2s',
+          }}
+        >
+          {loading ? 'Running Triage for All...' : 'Run Triage for All'}
+        </button>
+      </div>
       
       {error && <div style={{ color: '#dc2626', marginBottom: '1rem' }}>{error}</div>}
       <div className="grid grid-cols-1 ">

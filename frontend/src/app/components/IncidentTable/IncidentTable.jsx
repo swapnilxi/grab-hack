@@ -255,15 +255,15 @@ export default function IncidentTable({ incidents = [] }) {
                             <div style={{ margin: '12px 0', padding: '10px 16px', background: '#f1f5f9', borderRadius: 8, color: '#2563eb', fontWeight: 600 }}>
                               {state.triage.triage_decision === 'healing' ? (
                                 <>
-                                  Healing is done and resolved using: <span style={{ color: '#0f172a' }}>{state.agentResponse.recommended_action || 'N/A'}</span>
+                                  <span>Healing completed. Action taken:</span> <span style={{ color: '#0f172a' }}>{state.agentResponse.recommended_action || 'N/A'}</span>
                                 </>
                               ) : state.triage.triage_decision === 'fraud' ? (
                                 <>
-                                  Action against fraud is taken by: <span style={{ color: '#0f172a' }}>{state.agentResponse.resolution || 'N/A'}</span>
+                                  <span>Fraud response executed:</span> <span style={{ color: '#0f172a' }}>{state.agentResponse.resolution || 'N/A'}</span>
                                 </>
                               ) : null}
                               <div style={{ fontSize: '0.97em', color: '#475569', marginTop: 4 }}>
-                                Updated Status: <span style={{ color: '#0f172a' }}>{state.agentResponse.updated_status || 'N/A'}</span>
+                                New Status: <span style={{ color: '#0f172a' }}>{state.agentResponse.updated_status || 'N/A'}</span>
                               </div>
                             </div>
                           )}

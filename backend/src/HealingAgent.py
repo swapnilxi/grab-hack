@@ -70,10 +70,18 @@ class HealingAgent:
             try:
                 model_result = json.loads(result_text)
                 healing_needed = bool(model_result.get("healing_needed", False))
+                resolution = (
+                    "Healing is successful" if healing_needed else "No healing required"
+                )
+                updated_status = (
+                    "PENDING_REVIEW" if healing_needed else "NO_ACTION"
+                )
                 return {
                     "healing_needed": healing_needed,
                     "reason": model_result.get("reason", ""),
                     "recommended_action": model_result.get("recommended_action", ""),
+                    "resolution": resolution,
+                    "updated_status": updated_status,
                     "agent": "Healing Agent running"
                 }
             except Exception:
@@ -81,7 +89,8 @@ class HealingAgent:
                     "healing_needed": False,
                     "reason": "LLM output parsing failed",
                     "recommended_action": "",
-                    "raw": result_text,
+                    "resolution": "Healing failed",  # Always include
+                    "updated_status": "ERROR",       # Always include
                     "agent": "Healing Agent running"
                 }
         except Exception as e:
@@ -89,7 +98,8 @@ class HealingAgent:
                 "healing_needed": False,
                 "reason": f"Exception in Bedrock call: {e}",
                 "recommended_action": "",
-                "raw": "",
+                "resolution": "Healing failed",      # Always include
+                "updated_status": "ERROR",           # Always include
                 "agent": "Healing Agent running"
             }
 

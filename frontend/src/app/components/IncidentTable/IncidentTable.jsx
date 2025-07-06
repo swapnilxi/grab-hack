@@ -115,6 +115,8 @@ export default function IncidentTable({ incidents = [] }) {
       );
       if (!res.ok) throw new Error('Backend error');
       const data = await res.json();
+      // Flatten agent response if it has a 'result' key
+      const agentResponse = data.result ? { ...data.result, status: data.status } : data;
       setRowState(prev => ({
         ...prev,
         [id]: {
@@ -123,7 +125,7 @@ export default function IncidentTable({ incidents = [] }) {
           agentProgressStep: progressMsgs.length,
           agentProgressMessages: progressMsgs,
           agentError: null,
-          agentResponse: data
+          agentResponse
         }
       }));
     } catch (e) {
@@ -247,20 +249,25 @@ export default function IncidentTable({ incidents = [] }) {
                           ) : null}
                           {/* Agent response (fraud or healing) */}
                           {state.agentResponse && !state.agentLoading && (
-                            <div style={{
-                              marginTop: 18, padding: 18,
-                              background: 'var(--bg-card)', borderRadius: 10, boxShadow: '0 1px 4px #0001',
-                              color: 'var(--text-primary)',
-                              display: 'flex', flexDirection: 'column', gap: 8
-                            }}>
-                              <div style={{ fontSize: '1.18em', fontWeight: 700, color: 'var(--color-primary)' }}>
-                                Resolution: <span style={{ color: 'var(--text-primary)' }}>{state.agentResponse.resolution}</span>
-                              </div>
-                              <div style={{ fontSize: '1.08em', fontWeight: 600, color: 'var(--color-primary)' }}>
-                                Updated Status: <span style={{ color: 'var(--text-primary)' }}>{state.agentResponse.updated_status}</span>
+                            (() => { console.log('agentResponse:', state.agentResponse); return null; })()
+                          )}
+                          {state.agentResponse && !state.agentLoading && (
+                            <div style={{ margin: '12px 0', padding: '10px 16px', background: '#f1f5f9', borderRadius: 8, color: '#2563eb', fontWeight: 600 }}>
+                              {state.triage.triage_decision === 'healing' ? (
+                                <>
+                                  Healing is done and resolved using: <span style={{ color: '#0f172a' }}>{state.agentResponse.recommended_action || 'N/A'}</span>
+                                </>
+                              ) : state.triage.triage_decision === 'fraud' ? (
+                                <>
+                                  Action against fraud is taken by: <span style={{ color: '#0f172a' }}>{state.agentResponse.resolution || 'N/A'}</span>
+                                </>
+                              ) : null}
+                              <div style={{ fontSize: '0.97em', color: '#475569', marginTop: 4 }}>
+                                Updated Status: <span style={{ color: '#0f172a' }}>{state.agentResponse.updated_status || 'N/A'}</span>
                               </div>
                             </div>
                           )}
+
                           {state.agentError && (
                             <div style={{ color: "#dc2626", marginTop: 8 }}>
                               Error: {state.agentError}

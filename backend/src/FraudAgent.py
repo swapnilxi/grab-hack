@@ -31,6 +31,8 @@ class FraudAgent:
             fraud_detected: bool,
             fraud_result: "fraud"|"not_fraud"|"uncertain",
             reason: string,
+            resolution: string,         # NEW: For frontend display
+            updated_status: string,     # NEW: For frontend display
             raw: string (optional, only on error)
         }
         """
@@ -72,18 +74,36 @@ class FraudAgent:
                 model_result = json.loads(result_text)
                 result_val = str(model_result.get("fraud_result", "")).lower()
                 fraud_detected = (result_val == "fraud")
-                if result_val not in VALID_FRAUD_RESULTS:
+                # ==== NEW LOGIC FOR RESOLUTION AND UPDATED STATUS ====
+                if result_val == "fraud":
+                    resolution = "Fraud detected"
+                    updated_status = "FRAUD"
+                elif result_val == "not_fraud":
+                    resolution = "No fraud detected"
+                    updated_status = "CLEAN"
+                elif result_val == "uncertain":
+                    resolution = "Fraud status uncertain"
+                    updated_status = "UNCERTAIN"
+                else:
+                    # If invalid output from Claude, mark as error.
+                    resolution = "Fraud analysis error"
+                    updated_status = "ERROR"
                     return {
                         "fraud_detected": False,
                         "fraud_result": "uncertain",
                         "reason": f"Invalid output from Claude: {result_val}",
                         "raw": result_text,
+                        "resolution": resolution,      # NEW KEY
+                        "updated_status": updated_status,  # NEW KEY
                         "agent": "Fraud Agent running"
                     }
+                # ==== END NEW LOGIC ====
                 return {
                     "fraud_detected": fraud_detected,
                     "fraud_result": result_val,
                     "reason": model_result.get("reason", ""),
+                    "resolution": resolution,      # NEW KEY
+                    "updated_status": updated_status,  # NEW KEY
                     "agent": "Fraud Agent running"
                 }
             except Exception:
@@ -92,6 +112,8 @@ class FraudAgent:
                     "fraud_result": "uncertain",
                     "reason": "LLM output parsing failed",
                     "raw": result_text,
+                    "resolution": "Fraud analysis failed",    # NEW KEY
+                    "updated_status": "ERROR",                # NEW KEY
                     "agent": "Fraud Agent running"
                 }
         except Exception as e:
@@ -100,6 +122,8 @@ class FraudAgent:
                 "fraud_result": "uncertain",
                 "reason": f"Exception in Bedrock call: {e}",
                 "raw": "",
+                "resolution": "Fraud analysis failed",        # NEW KEY
+                "updated_status": "ERROR",                    # NEW KEY
                 "agent": "Fraud Agent running"
             }
 

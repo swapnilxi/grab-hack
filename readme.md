@@ -77,7 +77,7 @@ npm run dev
 ## Notes
 
 - Make sure both the backend and frontend servers are running for full functionality.
-- Datasets are located in the `dataset/` folder for reference.
+- Datasets could be added in the `dataset/` folder for reference. provided by grabhack
 - For any issues, check the terminal output of both servers for errors.
 
 ---

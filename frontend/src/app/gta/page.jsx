@@ -71,7 +71,7 @@ export default function GTADashboardPage() {
       {/* Summary Card - concise, left side, always 90%, light mode only */}
       <div style={{
         position: 'absolute', // Use absolute to avoid overlaying main content
-        top: "17%",
+        top: "19%",
         left: 38,
         minWidth: 160,
         background: '#fff',
